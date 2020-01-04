@@ -5,10 +5,14 @@ import time
 import matplotlib.pyplot as plt
 import seaborn as sns
 warnings.filterwarnings('ignore')
-import plotly 
+import plotly as py
 import plotly.graph_objs as go
 #pip install plotly==4.4.1
 from IPython.display import clear_output
+from plotly.graph_objs import *
+import plotly.figure_factory as ff
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class total_return:
     def __init__(self, df):
@@ -44,12 +48,9 @@ class total_return:
         return(self.df4.merge(df6, on = 'Date'))
     
     def plot_avg(self,df,price,avg_6m,avg_1y, index):
-        trace1 = go.Scatter(x = df.Date,y = price,mode = "lines",name = index + " Price",
-                                marker = dict(color = 'black'))
-        trace2 = go.Scatter(x = df.Date,y = avg_6m,mode = "lines",name = index + " 6 month Average",
-                                marker = dict(color = 'red'))
-        trace3 = go.Scatter(x = df.Date,y = avg_1y,mode = "lines",name = index +  " 1 Year Average",
-                                marker = dict(color = 'blue'))
+        trace1 = go.Scatter(x = df.Date,y = price,mode = "lines",name = index + " Price",marker = dict(color = 'black'))
+        trace2 = go.Scatter(x = df.Date,y = avg_6m,mode = "lines",name = index + " 6 month Average",marker = dict(color = 'red'))
+        trace3 = go.Scatter(x = df.Date,y = avg_1y,mode = "lines",name = index +  " 1 Year Average",marker = dict(color = 'blue'))
         data = [trace1, trace2, trace3]
         layout = dict(title = index + ' Price vs Moving Average',
                   xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
@@ -97,19 +98,26 @@ class total_return:
         self.ft_start = round((total * self.ft_w),2)
         self.agg_start = round((total * self.agg_w),2)
         self.gold_start = round((total * self.gold_w),2)
-        print('S&P:', '${:,.2f}'.format(self.sp500_start),',',self.sp500_w)
-        print('DJ:', '${:,.2f}'.format(self.dj_start),',',self.dj_w)
-        print('HS:', '${:,.2f}'.format(self.hs_start),',',self.hs_w)
-        print('FTSE:', '${:,.2f}'.format(self.ft_start),',',self.ft_w)
-        print('AGG:','${:,.2f}'.format(self.agg_start) ,',',self.agg_w)
-        print('Gold:', '${:,.2f}'.format(self.gold_start),',',self.gold_w)
         total_w = sum([self.sp500_w,self.dj_w,self.hs_w,self.ft_w,self.agg_w,self.gold_w])
-        print('Toatl of Weights:,', total_w )
+        total_start = sum([ self.sp500_start,self.dj_start,self.hs_start,self.agg_start,self.ft_start,
+                          self.gold_start])
+        data_matrix = [
+                ['S&P500', '${:,.2f}'.format(self.sp500_start),self.sp500_w ],
+               ['DJ', '${:,.2f}'.format(self.dj_start),self.dj_w ],
+               ['HS', '${:,.2f}'.format(self.hs_start), self.hs_w],
+               ['FTSE', '${:,.2f}'.format(self.ft_start), self.ft_w],
+               ['AGG', '${:,.2f}'.format(self.agg_start), self.agg_w],
+               ['Gold', '${:,.2f}'.format(self.gold_start), self.gold_w],
+                      ['Total', '${:,.2f}'.format(total_start), total_w]]
+        st_data = pd.DataFrame(data_matrix, columns = ['Index', 'Cash', 'Percent'])
+        print(st_data.to_string(index = False))
         print('==' * 10)
     
     def start(self, total,sp500, dj, hs, ftse, agg, gold):
-        print('Start Date:', self.start2)
-        print('End Date:', self.end2)
+        data_mat = [[self.start2, self.end2]]
+        data2 = pd.DataFrame(data_mat, columns = ['Start Date', 'End Date'])  
+        print(data2.to_string(index = False))
+
         print('=='*10)
         print('Starting Point')
         self.sp500_w = sp500
@@ -121,12 +129,19 @@ class total_return:
         total = total
 
         self.money_value(total,self.sp500_w, self.dj_w, self.hs_w, self.ft_w,self.agg_w ,self.gold_w)
+        us_w = sum([self.dj_w, self.sp500_w])
+        us_m = sum([self.dj_start, self.sp500_start])
+        inter_w = sum([self.hs_w, self.ft_w])
+        inter_m = sum([self.hs_start, self.ft_start])
+        
+        
+        mat1 = [['US', us_w, '${:,.2f}'.format(us_m)],
+               ['INTER', inter_w, '${:,.2f}'.format(inter_m)],
+               ['Bonds',self.agg_w,'${:,.2f}'.format(self.agg_start)],
+               ['Gold',self.gold_w,'${:,.2f}'.format(self.gold_start)]]
+        data3 = pd.DataFrame(mat1, columns = ['Sector', 'Percent', 'Cash'])
+        print(data3.to_string(index = False))
 
-        print('US Stocks:',sum([self.dj_w, self.sp500_w]),',','Cash:','${:,.2f}'.format(sum([self.dj_start, self.sp500_start])))
-        print('INTER Stocks:',sum([self.hs_w, self.ft_w]),',','Cash:','${:,.2f}'.format(sum([self.hs_start, self.ft_start])))
-        print('Bonds:', self.agg_w,',','Cash:','${:,.2f}'.format(self.agg_start))
-        print('Gold:',self.gold_w,',','Cash:','${:,.2f}'.format(self.gold_start)) 
-        print(' ')
         
     def start_value(self):
         self.sp500_value = self.sp500_start
@@ -158,16 +173,25 @@ class total_return:
         self.gold_value = round((total * self.gold_w),2)
         total2 = sum([self.sp500_value,self.hs_value, self.gold_value, 
                                       self.ft_value, self.dj_value, self.agg_value])
+        
         self.df_null = self.df_null.append({'Date':'allocation', 
                                         "return_sp":self.sp500_value, "return_dj" :self.dj_value,
                                          "return_hs" :self.hs_value,"return_ftse" :self.ft_value,
                                          "return_agg" :self.agg_value,"return_gold" :self.gold_value,
                                          "diff_10_2":'NA', 'total':total2,'Inflation':'NA' ,
                                            'inflation_adjusted_return': 'NA'}, ignore_index = True)
-        print('US Stocks:',round(sum([self.dj_w, self.sp500_w]),3),'|','Cash:','${:,.2f}'.format(round(sum([self.sp500_value, self.dj_value])),3))
-        print('INTER Stocks:',round(sum([self.hs_w, self.ft_w]),3),'|','Cash:','${:,.2f}'.format(round(sum([self.hs_value, self.ft_value])),3))
-        print('Bonds:', self.agg_w,'|','Cash:','${:,.2f}'.format(self.agg_value))
-        print('Gold:',self.gold_w,'|','Cash:','${:,.2f}'.format(self.gold_value))
+        
+        
+        us_w = sum([self.dj_w, self.sp500_w])
+        us_m = sum([self.dj_start, self.sp500_value])
+        inter_w = sum([self.hs_w, self.ft_w])
+        inter_m = sum([self.hs_start, self.ft_value])
+        mat40 = [['US', us_w, '${:,.2f}'.format(us_m)],
+               ['INTER', inter_w, '${:,.2f}'.format(inter_m)],
+               ['Bonds',self.agg_w,'${:,.2f}'.format(self.agg_value)],
+               ['Gold',self.gold_w,'${:,.2f}'.format(self.gold_value)]]
+        data40 = pd.DataFrame(mat40, columns = ['Sector', 'Percent', 'Cash'])
+        print(data40.to_string(index = False))
         print('--'*40)
         print(' ')
         time.sleep(0.5)
@@ -181,12 +205,15 @@ class total_return:
         self.agg_value = round((total * self.agg_w),2)
         self.gold_value = round((total * self.gold_w),2)
         print('Reallocation')
-        print('S&P:', '${:,.2f}'.format(self.sp500_value),'|',self.sp500_w)
-        print('DJ:', '${:,.2f}'.format(self.dj_value),'|',self.dj_w)
-        print('HS:', '${:,.2f}'.format(self.hs_value),'|',self.hs_w)
-        print('FTSE:','${:,.2f}'.format(self.ft_value),'|',self.ft_w)
-        print('AGG:', '${:,.2f}'.format(self.agg_value),'|',self.agg_w)
-        print('Gold:', '${:,.2f}'.format(self.gold_value),'|',self.gold_w)
+        mat30 = [['S&P500', '${:,.2f}'.format(self.sp500_value),self.sp500_w ],
+                        ['DJ', '${:,.2f}'.format(self.dj_value),self.dj_w ],
+                        ['HS', '${:,.2f}'.format(self.hs_value), self.hs_w],
+                        ['FTSE', '${:,.2f}'.format(self.ft_value), self.ft_w],
+                        ['AGG', '${:,.2f}'.format(self.agg_value), self.agg_w],
+                       ['Gold', '${:,.2f}'.format(self.gold_value), self.gold_w]]
+        data30 = pd.DataFrame(mat30, columns = ['Index', 'Cash', 'Percent'])
+        print(data30.to_string(index = False))
+        
         print(' ')
         print('--' * 40)
         total2 = sum([self.sp500_value,self.hs_value, self.gold_value, 
@@ -201,9 +228,12 @@ class total_return:
         
     def final_return(self, t, ia , ir):
         print('Final Total')
-        print('Total Cash:','${:,.2f}'.format(round(t,2)))
-        print('Inflation Adjusted Return:', '${:,.2f}'.format(ia))
-        print('Inflation on Starting Value:', '${:,.2f}'.format(ir))
+        mat20 = [['Total Cash', '${:,.2f}'.format(round(t,2))],
+                ['Inflation Adjusted Return','${:,.2f}'.format(ia) ],
+                ['Inflation on Starting Value','${:,.2f}'.format(ir)]]
+        
+        data20 = pd.DataFrame(mat20, columns = ['Return', 'Cash'])
+        print(data20.to_string(index = False))
         
     def raw_returns(self,df):
         
@@ -226,20 +256,8 @@ class total_return:
             inf = df.iloc[i][26]
             
             diff_list.append(diff)
-            print('Date:', dt)
-            print('Month #:', month_count)
-            print('SP500 Price:',df.iloc[i][1],'|', '6 Month Avg:', df.iloc[i][14],'|','1 Year Avg:', df.iloc[i][20])
-            print('DJ Price:',df.iloc[i][9], '|','6 Month Avg:', df.iloc[i][18],'|','1 Year Avg:', df.iloc[i][24])
-            print('HS Price:',df.iloc[i][3], '|','6 Month Avg:', df.iloc[i][15],'|','1 Year Avg:', df.iloc[i][21])
-            print('FTSE Price:',df.iloc[i][7], '|','6 Month Avg:', df.iloc[i][17],'|','1 Year Avg:', df.iloc[i][23])
-            print('Gold Price:',df.iloc[i][5], '|','6 Month Avg:', df.iloc[i][16],'|','1 Year Avg:', df.iloc[i][22])
-            print('AGG Price:',df.iloc[i][11], '|','6 Month Avg:', df.iloc[i][19],'|','1 Year Avg:', df.iloc[i][25])
-            print('10 minus 2:', diff)
-            print('==' * 10)
+        
             
-            
-
-
             sp500_cash = round(self.sp500_value * (1 + sp500) ,2)
             self.sp500_value = sp500_cash
 
@@ -266,22 +284,49 @@ class total_return:
                                      "return_agg" :self.agg_value,"return_gold" :self.gold_value,
                                      "diff_10_2":diff,'total':self.time_total, 'Inflation': self.inf_rate,
                                                'inflation_adjusted_return':self.inf_adj}, ignore_index = True)
+            
+            print('Date:', dt)
+            print('Month #:', month_count)
+            print('10 minus 2:', diff)
+            print(' ')
+            
+            mat2 = [['SP500', '${:,.2f}'.format(self.sp500_value)],
+                   ['DJ', '${:,.2f}'.format(self.dj_value)],
+                   ['HS','${:,.2f}'.format(self.hs_value)],
+                   ['FTSE','${:,.2f}'.format(self.ft_value)],
+                   ['Gold', '${:,.2f}'.format(self.gold_value)],
+                   ['AGG', '${:,.2f}'.format(self.agg_value)],
+                   ['Total cash','${:,.2f}'.format(self.time_total)],
+                   ['Inflation Adjusted','${:,.2f}'.format(self.inf_adj)],
+                   ['Inflation','${:,.2f}'.format(self.inf_rate)]]
+            
+            data4 = pd.DataFrame(mat2, columns = ['Index', 'Cash'])
+            print(data4.to_string(index = False))
+            print('==' * 10)
+            
             month_count += 1
             count += 1
             total_count += 1
             sub2 = len(df) - total_count
             time.sleep(1)
+            
+            
             if count == 6:
                 print('--' * 40)
                 print(' ')
                 print('6 MONTH CHECK')
                 print('Date:',dt)
-                print('Total Cash:', '${:,.2f}'.format(round(self.time_total,2)))
-                print('Inflation Adjusted Return:', '${:,.2f}'.format(self.inf_adj))
-                print('Inflation on Starting Value:', '${:,.2f}'.format(self.inf_rate))
                 print('10 - 2:', diff_list)
+                print(' ')
+                mat4 = [['Total Cash', '${:,.2f}'.format(round(self.time_total,2))],
+                       ['Inflation Adjusted Return','${:,.2f}'.format(self.inf_adj) ],
+                       ['Inflation on Starting Value','${:,.2f}'.format(self.inf_rate)]]
+                data5 = pd.DataFrame(mat4, columns = ['Return', 'Cash'])
+                print(data5.to_string(index = False))
+                
                 diff_list.clear()
                 print('==' * 10)
+                
                 count = 0
                 total = self.time_total
                 agg_pct = round(agg_cash/total,3)
@@ -290,17 +335,47 @@ class total_return:
                 ft_pct = round(ft_cash/total,3)
                 hs_pct = round(hs_cash/total,3)
                 gold_pct = round(gold_cash/total,3)
-                print('SP500:',sp_pct,'|','Cash:','${:,.2f}'.format(sp500_cash))
-                print('DJ:',dj_pct,'|','Cash:','${:,.2f}'.format(dj_cash))
-                print('HS:',hs_pct, '|','Cash:','${:,.2f}'.format(hs_cash))
-                print('FTSE:',ft_pct, '|','Cash:','${:,.2f}'.format(ft_cash))
-                print('Gold:',gold_pct, '|','Cash:','${:,.2f}'.format(gold_cash))
-                print('AGG:',agg_pct, '|', 'Cash:','${:,.2f}'.format(agg_cash))
+                
+                mat5 = [['S&P500', '${:,.2f}'.format(sp500_cash),sp_pct ],
+                            ['DJ', '${:,.2f}'.format(dj_cash),dj_pct],
+                            ['HS', '${:,.2f}'.format(hs_cash), hs_pct],
+                            ['FTSE', '${:,.2f}'.format(ft_cash), ft_pct],
+                            ['AGG', '${:,.2f}'.format(agg_cash), agg_pct],
+                            ['Gold', '${:,.2f}'.format(gold_cash), gold_pct]]
+                data6 = pd.DataFrame(mat5, columns = ['Index', 'Cash', 'Percent'])
+                print(data6.to_string(index = False))
+
                 print('==' * 10)
-                print('US Stocks:',round(sum([dj_pct, sp_pct]),3),',','Cash:','${:,.2f}'.format(round(sum([dj_cash,    sp500_cash])),3))
-                print('INTER Stocks:',round(sum([hs_pct, ft_pct]),3),',','Cash:','${:,.2f}'.format(round(sum([hs_cash, ft_cash])),3))
-                print('Bonds:', agg_pct,',','Cash:','${:,.2f}'.format(agg_cash))
-                print('Gold:',gold_pct,',','Cash:','${:,.2f}'.format(gold_cash))
+                
+                us_w = round(sum([dj_pct, sp_pct]),3)
+                us_m = round(sum([dj_cash,    sp500_cash]),2)
+                inter_w = round(sum([hs_pct, ft_pct]),3)
+                inter_m = round(sum([hs_cash, ft_cash]))
+        
+        
+                mat8 = [['US', us_w, '${:,.2f}'.format(us_m)],
+                       ['INTER', inter_w, '${:,.2f}'.format(inter_m)],
+                       ['Bonds',agg_pct,'${:,.2f}'.format(agg_cash)],
+                       ['Gold',gold_pct,'${:,.2f}'.format(gold_cash)]]
+                data7 = pd.DataFrame(mat8, columns = ['Sector', 'Percent', 'Cash'])
+                print(data7.to_string(index = False))
+                
+                df55 = df[:i]
+                plt.figure(figsize=(15,7))
+                sns.set(style="darkgrid")
+                sns.lineplot(data=df55, x='Date',y='diff_10_2', color = 'red',marker="o")
+                plt.axhline(y=0, c='black',linewidth=3)
+                plt.ylim(-2, 3)
+                plt.title('10 minus 2', fontsize = 20)
+                plt.xlabel('Date',fontsize = 15)
+                plt.ylabel('Percent Difference',fontsize = 15)
+                plt.tick_params(labelsize=15)
+                
+                plt.show()
+                
+                
+                
+                
                 print('--' * 40)
                 sub = len(df) - total_count
                 
@@ -332,47 +407,50 @@ class total_return:
     
     
     
-    def plot_return(self, ww):
-        if ww == 'index':
-            df11 = self.df_null[(self.df_null['Date'] != 'reallocate') & (self.df_null['Date'] != 'allocation')]
-            df11['Date'] = pd.to_datetime(df11['Date'], format="%Y-%m-%d")
-            df12 = df11.drop(['diff_10_2', 'total','inflation_adjusted_return', 'Inflation'], axis = 1)
-            df12.columns = ['Date', 'SP500', 'DJ', 'FTSE', 'HS', 'AGG', 'Gold']
-            trace1 = go.Scatter(x = df12.Date,y = df12.SP500,mode = "lines+markers",name = "SP500",
-                                marker = dict(color = 'blue'))
-            trace2 = go.Scatter(x = df12.Date,y = df12.DJ,mode = "lines+markers",name = "DJ",
-                                marker = dict(color = 'orange'))
-            trace3 = go.Scatter(x = df12.Date,y = df12.FTSE,mode = "lines+markers",name = "FTSE",
-                                marker = dict(color = 'purple'))
-            trace4 = go.Scatter(x = df12.Date,y = df12.HS, mode = "lines+markers",name = "HS",
-                                marker = dict(color = 'green'))
-            trace5 = go.Scatter(x = df12.Date, y = df12.AGG,mode = "lines+markers",name = "AGG",
-                                marker = dict(color = 'red'))
-            trace6 = go.Scatter(x = df12.Date,y = df12.Gold,mode = "lines+markers",name = "Gold",
-                                marker = dict(color = 'gold'))
-            data = [trace1, trace2,trace3,trace4,trace5,trace6]
-            layout = dict(title = 'Asset Total Return',
-                  xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
-                  yaxis= dict(title= 'Dollars',ticklen= 5,zeroline= False)
-                 )
-            fig = dict(data = data, layout = layout)
-            plotly.offline.iplot(fig)
-        elif ww == 'total':
-            df11 = self.df_null[(self.df_null['Date'] != 'reallocate') & (self.df_null['Date'] != 'allocation')]
-            df11['Date'] = pd.to_datetime(df11['Date'], format="%Y-%m-%d")
-            trace1 = go.Scatter(x = df11.Date,y = df11.inflation_adjusted_return,mode = "lines+markers",
-                                name = "Inflation Adjusted Return",marker = dict(color = 'red'))
-            trace2 = go.Scatter(x = df11.Date,y = df11.Inflation,mode = "lines+markers",name = "Inflation",
-                                marker = dict(color = 'green'))
-            data = [trace1, trace2]
-            layout = dict(title = 'Inflation Adjusted Return vs. Inflation ',
-                  xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
-                  yaxis= dict(title= 'Dollars',ticklen= 5,zeroline= False)
-                 )
-            fig = dict(data = data, layout = layout)
-            plotly.offline.iplot(fig)
-        else:
-            print('Not a choice')
+    def plot_return(self):
+        df11 = self.df_null[(self.df_null['Date'] != 'reallocate') & (self.df_null['Date'] != 'allocation')]
+        df11['Date'] = pd.to_datetime(df11['Date'], format="%Y-%m-%d")
+        df12 = df11.drop(['diff_10_2', 'total','inflation_adjusted_return', 'Inflation'], axis = 1)
+        df12.columns = ['Date', 'SP500', 'DJ', 'FTSE', 'HS', 'AGG', 'Gold']
+        trace1 = Scatter(x = df12.Date,y = df12.SP500,mode = "lines+markers",name = "SP500", marker = dict(color = 'blue'))
+        trace2 = Scatter(x = df12.Date,y = df12.DJ,visible=False,mode = "lines+markers",name = "DJ",marker = dict(color = 'orange'))
+        trace3 = Scatter(x = df12.Date,y = df12.FTSE,visible=False,mode = "lines+markers",name = "FTSE", marker = dict(color = 'purple'))
+        trace4 = Scatter(x = df12.Date,y = df12.HS, visible=False,mode = "lines+markers",name = "HS", marker = dict(color = 'green'))
+        trace5 = Scatter(x = df12.Date, y = df12.AGG,visible=False,mode = "lines+markers",name = "AGG",marker = dict(color = 'red'))
+        trace6 = Scatter(x = df12.Date,y = df12.Gold,visible=False,mode = "lines+markers",name = "Gold",marker = dict(color = 'gold'))
+        data = Data([trace1, trace2, trace3, trace4, trace5, trace6])
+        layout = Layout(title='Asset Total Return',xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
+                          yaxis= dict(title= 'Dollars',ticklen= 5,zeroline= False),
+                        updatemenus=list([
+                dict(x=-0.05,y=1,yanchor='top',
+                buttons=list([
+                        dict(args=['visible', [True, False,False,False,False,False]],label='SP500',method='restyle'),
+                        dict(args=['visible', [False, True,False,False,False,False]],label='DJ',method='restyle'),
+                        dict(args=['visible', [False, False, True,False,False,False]],label='HS',method='restyle'),
+                        dict(args=['visible', [False, False,False, True, False,False]],label='FTSE',method='restyle'),
+                        dict(args=['visible', [False, False,False,False, True,False]],label='AGG',method='restyle'),
+                        dict(args=['visible', [False, False,False,False, False,True]],label='Gold',method='restyle'),
+                        dict(args=['visible', [True, True,True,True, True,True]],label='All',method='restyle'),
+                    ]),
+                    )
+            ]),
+        ) 
+        fig = Figure(data=data, layout=layout)
+        py.offline.iplot(fig)
+        
+    def plot_adj_return(self):
+        df11 = self.df_null[(self.df_null['Date'] != 'reallocate') & (self.df_null['Date'] != 'allocation')]
+        df11['Date'] = pd.to_datetime(df11['Date'], format="%Y-%m-%d")
+            
+        trace1 = go.Scatter(x = df11.Date,y = df11.inflation_adjusted_return,mode = "lines+markers",name = "Inflation Adjusted Return",marker = dict(color = 'red'))
+        trace2 = go.Scatter(x = df11.Date,y = df11.Inflation,mode = "lines+markers",name = "Inflation",marker = dict(color = 'green'))
+        data = [trace1, trace2]
+        layout = dict(title = 'Inflation Adjusted Return vs. Inflation ',
+                xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
+                yaxis= dict(title= 'Dollars',ticklen= 5,zeroline= False)
+                )
+        fig = dict(data = data, layout = layout)
+        py.offline.iplot(fig)
                
     def all_one(self, df):
         self.df22 = pd.DataFrame()
@@ -453,13 +531,13 @@ class total_return:
         trace6 = go.Scatter(x = df_all.Date,y = df_all.Gold,mode = "lines",name = "Gold",
                                 marker = dict(color = 'gold'))
         trace7 = go.Scatter(x = df_all.Date,y = df_all.inflation_adjusted_return,mode = "lines",
-                                name = "Inflation Adjusted Return",marker = dict(color = 'red', size = 20))
+                                name = "Inflation Adjusted Return",marker = dict(color = 'red',size = 30 ))
         trace8 = go.Scatter(x = df_all.Date,y = df_all.Inflation,mode = "lines",name = "Inflation",
-                                marker = dict(color = 'black', size = 20))
+                                marker = dict(color = 'black',size = 30))
         data = [trace1, trace2,trace3,trace4,trace5,trace6,trace7,trace8]
         layout = dict(title = 'Retrun if all of Money was in one Asset',
                   xaxis= dict(title= 'Date',ticklen= 5,zeroline= False),
                   yaxis= dict(title= 'Dollars',ticklen= 5,zeroline= False)
                  )
         fig = dict(data = data, layout = layout)
-        plotly.offline.iplot(fig)
+        py.offline.iplot(fig)
